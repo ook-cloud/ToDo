@@ -1,11 +1,18 @@
-export const TodoActionButton = (props) => {
+export const TodoActionButton = ({
+  disabled,
+  onClick,
+  className,
+  text,
+  type = "button",
+}) => {
   return (
     <button
-      disabled={props.disabled}
-      onClick={props.onClick}
-      className={props.className}
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={className}
     >
-      {props.text}
+      {text}
     </button>
   );
 };

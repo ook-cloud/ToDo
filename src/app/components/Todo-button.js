@@ -1,27 +1,17 @@
-export const TodoButton = (props) => {
+export const TodoButton = ({ text, onClick, filterValue }) => {
+  const isActive = filterValue === text;
+
   return (
     <button
-      className="button"
-      onclick={props.onClick}
+      type="button"
+      className="button2"
+      onClick={onClick}
       style={{
-        backgroundColor:
-          props.filterValue === props.text ? "#3c82f6" : "#f3f4f6",
-        color: props.filterValue === props.text ? "White" : "Black",
+        backgroundColor: isActive ? "#3c82f6" : "#f3f4f6",
+        color: isActive ? "white" : "black",
       }}
     >
-      {props.text}
+      {text}
     </button>
   );
 };
-
-{
-  /* <button className = "add" disabled = {isEmpty || isToolong}>
-    add
-</button>
-
-
-<button className = "deletebtn"
- onClick = {() => handleDelete(todos.id)}>
-    delete
-</button> */
-}

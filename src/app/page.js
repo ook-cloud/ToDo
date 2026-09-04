@@ -1,198 +1,164 @@
 "use client";
 
-import { useState } from "react";
 import "./globals.css";
+import { useState, useEffect } from "react";
+import { TodoButton } from "./components/Todo-button";
+import { TodoActionButton } from "./components/TodoActionButton";
 
-export default function Todo() {
-  const [state, setState] = useState("All");
+export default function Exercise9Page() {
+  const [text, setText] = useState("");
+  const [filter, setFilter] = useState("All");
   const [todos, setTodos] = useState([]);
-  const [inputValue, setInputValue] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  const handleInputChange = (event) => {
-    const value = event.target.value;
-    setInputValue(value);
-  };
-
-  const handleActiveButtonClick = () => {
-    setState("Active");
-  };
-
-  const handleCompleteButtonClick = () => {
-    setState("Completed");
-  };
-
-  const handleAllButton = () => {
-    setState("All");
-  };
-
-  const handleAdButton = () => {
-    if (inputValue.trim() === "") {
-      setErrorMessage("Please enter todo");
-      return;
-    }
-    const newTodo = {
-      id: Date.now(),
-      title: inputValue.trim(),
-      status: "Active",
-      isDone: false,
-    };
-    setTodos([...todos, newTodo]);
-    setInputValue("");
-    setErrorMessage("");
-  };
-
-  const handleTodoStatusChange = (id) => {
-    const updatedTodo = todos.map((todo) => {
-      if (todo.id === id) {
-        const isCompleted = todo.status === "Complete";
-        return {
-          ...todo,
-          status: isCompleted ? "Active" : "Complete",
-          isDone: !isCompleted,
-        };
-      } else {
-        return todo;
+  // LocalStorage-оос унших (Next.js SSR Hydration алдаанаас сэргийлнэ)
+  useEffect(() => {
+    const saved = localStorage.getItem("todos");
+    if (saved) {
+      try {
+        setTodos(JSON.parse(saved));
+      } catch (e) {
+        console.error("LocalStorage уншихад алдаа гарлаа", e);
       }
-    });
-    setTodos(updatedTodo);
-  };
+    }
+    setIsLoaded(true);
+  }, []);
 
-  const activeTodos = todos.filter((todo) => todo.status === "Active");
-  const completeTodos = todos.filter((todo) => todo.status === "Complete");
+  // Todos өөрчлөгдөх бүрт LocalStorage руу хадгална
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+  }, [todos, isLoaded]);
 
-  const deleteTodo = (id) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
+  const isEmpty = text.trim() === "";
+  const doneCount = todos.filter((todo) => todo.done).length;
 
-  const handleClearCompleted = () => {
-    setTodos(todos.filter((todo) => todo.status !== "Complete"));
-  };
+  const filteredTodos = todos.filter((todo) => {
+    if (filter === "Active") return !todo.done;
+    if (filter === "Completed") return todo.done;
+    return true;
+  });
 
-  const displayTodos =
-    state === "Active"
-      ? activeTodos
-      : state === "Completed"
-        ? completeTodos
-        : todos;
+  const isListEmpty = filteredTodos.length === 0;
+
+  function handleAdd(e) {
+    e.preventDefault();
+    if (isEmpty) return;
+
+    const newTodo = { id: Date.now(), title: text.trim(), done: false };
+    setTodos((prev) => [...prev, newTodo]);
+    setText("");
+  }
+
+  function handleToggle(id) {
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, done: !todo.done } : todo,
+      ),
+    );
+  }
+
+  function handleDelete(id) {
+    setTodos((prev) => prev.filter((todo) => todo.id !== id));
+  }
+
+  function handleClearCompleted() {
+    setTodos((prev) => prev.filter((todo) => !todo.done));
+  }
+
+  if (!isLoaded) return null;
 
   return (
-    <main className="Background">
-      <div className="container">
-        <div className="card">
-          <h1 className="card-title">To-Do list</h1>
+    <div className="container">
+      <div className="Main-container">
+        <h1 className="Header">To-do list</h1>
 
-          <div className="input-wrapper">
-            <input
-              className="hero-input"
-              onChange={handleInputChange}
-              placeholder="Add a new task..."
-              value={inputValue}
-              onKeyDown={(e) => e.key === "Enter" && handleAdButton()}
-            />
-            <button className="btn-add" onClick={handleAdButton}>
-              Add
-            </button>
-          </div>
+        <form onSubmit={handleAdd} className="form">
+          <input
+            type="text"
+            placeholder="Add a new task..."
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="input"
+          />
+          <TodoActionButton
+            text="Add"
+            className="button1"
+            type="submit"
+            disabled={isEmpty}
+          />
+        </form>
 
-          {errorMessage !== "" && (
-            <div className="error-message">{errorMessage}</div>
-          )}
+        <div className="Container2">
+          <TodoButton
+            onClick={() => setFilter("All")}
+            text="All"
+            filterValue={filter}
+          />
+          <TodoButton
+            onClick={() => setFilter("Active")}
+            text="Active"
+            filterValue={filter}
+          />
+          <TodoButton
+            onClick={() => setFilter("Completed")}
+            text="Completed"
+            filterValue={filter}
+          />
+        </div>
 
-          <div className="filter-tabs">
-            <button
-              className={`tab-item ${state === "All" ? "active" : ""}`}
-              onClick={handleAllButton}
-            >
-              All
-            </button>
-            <button
-              className={`tab-item ${state === "Active" ? "active" : ""}`}
-              onClick={handleActiveButtonClick}
-            >
-              Active
-            </button>
-            <button
-              className={`tab-item ${state === "Completed" ? "active" : ""}`}
-              onClick={handleCompleteButtonClick}
-            >
-              Completed
-            </button>
-          </div>
-
-          <div className="todo-container">
-            {displayTodos.length === 0 ? (
-              <div className="empty-state">No tasks yet. Add one above!</div>
-            ) : (
-              displayTodos.map((todo) => (
-                <div key={todo.id} className="todo-card">
-                  <div className="todo-content">
-                    <div
-                      className={`custom-checkbox ${
-                        todo.isDone ? "" : "unchecked"
-                      }`}
-                      onClick={() => handleTodoStatusChange(todo.id)}
-                    >
-                      {todo.isDone && (
-                        <svg
-                          width="12"
-                          height="9"
-                          viewBox="0 0 14 11"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M1 5.5L4.84615 9.5L13 1.5"
-                            stroke="white"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                    </div>
-
-                    <span
-                      className={`todo-label ${todo.isDone ? "completed" : ""}`}
-                      onClick={() => handleTodoStatusChange(todo.id)}
-                    >
-                      {todo.title}
-                    </span>
-                  </div>
-
-                  {todo.isDone && (
-                    <button
-                      className="btn-delete"
-                      onClick={() => deleteTodo(todo.id)}
-                    >
-                      Delete
-                    </button>
-                  )}
+        {isListEmpty ? (
+          <p className="empty-state">No tasks yet. Add one above!</p>
+        ) : (
+          <div className="task-list">
+            {filteredTodos.map((todo) => (
+              <div key={todo.id} className="Container3">
+                <div className="task-content">
+                  <input
+                    type="checkbox"
+                    checked={todo.done}
+                    onChange={() => handleToggle(todo.id)}
+                    className="checkbox"
+                  />
+                  <span
+                    className={`task-text ${todo.done ? "completed-text" : ""}`}
+                  >
+                    {todo.title}
+                  </span>
                 </div>
-              ))
+
+                <TodoActionButton
+                  text="Delete"
+                  className="delete-text-btn"
+                  onClick={() => {
+                    if (window.confirm("Устгах нь зөв үү?")) {
+                      handleDelete(todo.id);
+                    }
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isListEmpty && (
+          <div className="Container4">
+            <span className="summary-text">
+              {doneCount} of {todos.length} tasks completed
+            </span>
+            {doneCount > 0 && (
+              <button onClick={handleClearCompleted} className="Button3">
+                Clear completed
+              </button>
             )}
           </div>
+        )}
 
-          {/* Статистик болон Clear товч */}
-          {todos.length > 0 && (
-            <div className="card-footer">
-              <span>
-                {completeTodos.length} of {todos.length} tasks completed
-              </span>
-              {completeTodos.length > 0 && (
-                <button className="btn-clear" onClick={handleClearCompleted}>
-                  Clear completed
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Footer */}
-          <div className="powered-by">
-            Powered by <a href="#!">Pinecone academy</a>
-          </div>
-        </div>
+        <p className="footer-text">
+          Powered by <span>Pinecone academy</span>
+        </p>
       </div>
-    </main>
+    </div>
   );
 }
