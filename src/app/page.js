@@ -24,7 +24,7 @@ export default function Home() {
       const saved = localStorage.getItem("todos");
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
-      console.error("LocalStorage уншихад алдаа гарлаа", e);
+      console.error("LocalStorage reading error", e);
       return [];
     }
   });
