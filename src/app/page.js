@@ -1,14 +1,23 @@
 "use client";
 
 import "./globals.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { TodoButton } from "./components/Todo-button";
 import { TodoActionButton } from "./components/TodoActionButton";
+
+const emptySubscribe = () => () => {};
+function useIsClient() {
+  return useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+}
 
 export default function Home() {
   const [text, setText] = useState("");
   const [filter, setFilter] = useState("All");
-
+  const isClient = useIsClient();
   const [todos, setTodos] = useState(() => {
     if (typeof window === "undefined") return [];
     try {
@@ -21,8 +30,10 @@ export default function Home() {
   });
 
   useEffect(() => {
-    localStorage.setItem("todos", JSON.stringify(todos));
-  }, [todos]);
+    if (isClient) {
+      localStorage.setItem("todos", JSON.stringify(todos));
+    }
+  }, [todos, isClient]);
 
   const isEmpty = text.trim() === "";
   const doneCount = todos.filter((todo) => todo.done).length;
@@ -58,6 +69,9 @@ export default function Home() {
 
   function handleClearCompleted() {
     setTodos((prev) => prev.filter((todo) => !todo.done));
+  }
+  if (!isClient) {
+    return null;
   }
 
   return (
