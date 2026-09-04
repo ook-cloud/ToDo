@@ -5,31 +5,24 @@ import { useState, useEffect } from "react";
 import { TodoButton } from "./components/Todo-button";
 import { TodoActionButton } from "./components/TodoActionButton";
 
-export default function Exercise9Page() {
+export default function Home() {
   const [text, setText] = useState("");
   const [filter, setFilter] = useState("All");
-  const [todos, setTodos] = useState([]);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // LocalStorage-оос унших (Next.js SSR Hydration алдаанаас сэргийлнэ)
-  useEffect(() => {
-    const saved = localStorage.getItem("todos");
-    if (saved) {
-      try {
-        setTodos(JSON.parse(saved));
-      } catch (e) {
-        console.error("LocalStorage уншихад алдаа гарлаа", e);
-      }
+  const [todos, setTodos] = useState(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem("todos");
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("LocalStorage уншихад алдаа гарлаа", e);
+      return [];
     }
-    setIsLoaded(true);
-  }, []);
+  });
 
-  // Todos өөрчлөгдөх бүрт LocalStorage руу хадгална
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem("todos", JSON.stringify(todos));
-    }
-  }, [todos, isLoaded]);
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
   const isEmpty = text.trim() === "";
   const doneCount = todos.filter((todo) => todo.done).length;
@@ -66,8 +59,6 @@ export default function Exercise9Page() {
   function handleClearCompleted() {
     setTodos((prev) => prev.filter((todo) => !todo.done));
   }
-
-  if (!isLoaded) return null;
 
   return (
     <div className="container">
